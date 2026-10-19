@@ -9,6 +9,10 @@ env:
   # ⬇️ Your Render server's address (shown at the top of the service page on Render),
   #    starting with wss:// and with no trailing slash.
   GAME_SERVER: wss://gl-tahx.onrender.com
+  # Your other two Render servers (set START_WORLD=0 on both). Paste their addresses, starting with wss:// and with no trailing slash.
+  # Leave a line empty and those games use GAME_SERVER above instead.
+  GAMES_SERVER_1: wss://gl-y7cn.onrender.com   # runs Vertigo Freight, Creeps and Night Owl Market
+  GAMES_SERVER_2: wss://gl-zcmi.onrender.com   # runs Little Lantern and St. Ambrose
 
 jobs:
   build_game:
@@ -97,7 +101,9 @@ jobs:
             test -d "client/$d" || { echo "::error::client/$d is missing from the upload"; exit 1; }
           done
           for g in vertigo creeps market lantern hollow; do
-            sed -i "s#^export const COOP_SERVER = .*#export const COOP_SERVER = '${GAME_SERVER}/$g'#" "client/$g/js/config.js"
+            case "$g" in vertigo|creeps|market) COOP_BASE="${GAMES_SERVER_1:-$GAME_SERVER}" ;; *) COOP_BASE="${GAMES_SERVER_2:-$GAME_SERVER}" ;; esac
+            echo "$g server: $COOP_BASE"
+            sed -i "s#^export const COOP_SERVER = .*#export const COOP_SERVER = '${COOP_BASE}/$g'#" "client/$g/js/config.js"
             grep -n "COOP_SERVER = " "client/$g/js/config.js"
           done
           for d in vertigo creeps market lantern hollow gamekit; do
